@@ -1,16 +1,30 @@
-name: Scheduled Health Check
+name: Scheduled Health Check  # 工作流名称
 
-# Controls when the action will run.
+# 控制工作流何时运行
 on:
   schedule:
-    - cron: "30 * * * *"
+    - cron: "0 * * * *"   # 每小时整点执行一次，格式为：分 时 日 月 周
+    - cron: "* * * * *"   # 每分钟执行一次
 
 jobs:
-  health_check_job:
-    runs-on: ubuntu-latest
-    name: Check all sites
+  # 每小时执行一次的任务
+  hourly_health_check:
+    runs-on: ubuntu-latest  # 指定运行环境为最新版Ubuntu
+    name: Hourly Check      # 任务名称
+    if: github.event.schedule == '0 * * * *'  # 条件判断：只有当触发事件是每小时整点的cron时才执行
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Shell Script
-        id: shell_script_run
-        run: bash ./health-check.sh
+      - uses: actions/checkout@v2  # 第一步：检出代码仓库
+      - name: Run Hourly Check     # 第二步：运行每小时健康检查脚本
+        id: hourly_check           # 步骤ID，可用于后续引用
+        run: bash ./health-check.sh  # 执行健康检查Shell脚本
+        
+  # 每分钟执行一次的任务
+  minute_health_check:
+    runs-on: ubuntu-latest  # 指定运行环境为最新版Ubuntu
+    name: Minute Check      # 任务名称
+    if: github.event.schedule == '* * * * *'  # 条件判断：只有当触发事件是每分钟的cron时才执行
+    steps:
+      - uses: actions/checkout@v2  # 第一步：检出代码仓库
+      - name: Run Minute Check     # 第二步：运行每分钟健康检查脚本
+        id: minute_check           # 步骤ID，可用于后续引用
+        run: bash ./minute-health-check.sh  # 执行每分钟健康检查Shell脚本
