@@ -17,9 +17,23 @@ jobs:
           fetch-depth: 0  # 获取完整历史以确保可以正确合并
           token: ${{ secrets.GITHUB_TOKEN }}  # 使用自动提供的token
 
-      - name: Run Health Check Script
-        id: shell_script_run
-        run: bash ./health-check.sh
+      - name: Create timestamp file
+        run: |
+          # 创建时间戳目录（如果不存在）
+          mkdir -p timestamps
+          
+          # 获取当前时间并格式化为文件名友好的格式
+          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          FILENAME="timestamps/timestamp_$TIMESTAMP.txt"
+          
+          # 创建文件并写入内容
+          echo "File created at: $(date)" > "$FILENAME"
+          echo "Runner ID: $GITHUB_RUN_ID" >> "$FILENAME"
+          echo "Runner number: $GITHUB_RUN_NUMBER" >> "$FILENAME"
+          
+          # 显示创建的文件
+          echo "Created file: $FILENAME"
+          cat "$FILENAME"
         
       - name: Check for changes
         id: git_status
