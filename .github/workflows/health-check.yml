@@ -3,14 +3,38 @@ name: Scheduled Health Check
 # Controls when the action will run.
 on:
   schedule:
-    - cron: "* * * * *"
+    - cron: "*/2 * * * *"  # 每隔2分钟执行一次
 
 jobs:
   health_check_job:
     runs-on: ubuntu-latest
     name: Check all sites
+    permissions:
+      contents: write  # 明确授予写入权限
     steps:
-      - uses: actions/checkout@v2
-      - name: Run Shell Script
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # 获取完整历史以确保可以正确合并
+          token: ${{ secrets.GITHUB_TOKEN }}  # 使用自动提供的token
+
+      - name: Run Health Check Script
         id: shell_script_run
         run: bash ./health-check.sh
+        
+      - name: Check for changes
+        id: git_status
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit and Push changes
+        if: steps.git_status.outputs.changes == 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "Health check update: $(date)"
+          git push
